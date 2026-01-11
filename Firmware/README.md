@@ -30,7 +30,11 @@ pio run --target upload
 The web assets (from `data_pre` folder) are automatically minified and embedded into the firmware during the build process.
 
 ### 4. OTA Updates
-Once the device is connected to WiFi, you can update the firmware over-the-air using PlatformIO:
+Once the device is connected to WiFi, you can update the firmware over-the-air using ArduinoOTA.
+
+> **Note:** OTA requires the `min_spiffs.csv` partition table (configured in `platformio.ini`) which provides two app partitions for safe firmware switching.
+
+Using PlatformIO:
 
 ```bash
 pio run --target upload --environment esp32_ota

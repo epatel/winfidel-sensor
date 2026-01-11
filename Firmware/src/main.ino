@@ -2,7 +2,6 @@
 #include <EEPROM.h>
 #include <WiFiManager.h>
 #include <ArduinoOTA.h>
-#include <Update.h>
 #include "WiFi.h"
 #include "ESPAsyncWebServer.h"
 #include "include/PersistSettings.h"

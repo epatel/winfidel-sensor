@@ -29,18 +29,17 @@ pio run --target upload
 
 The web assets (from `data_pre` folder) are automatically minified and embedded into the firmware during the build process.
 
-### 4. OTA Updates (Web-based)
-Once the device is connected to WiFi, you can update the firmware via web browser or command line:
+### 4. OTA Updates
+Once the device is connected to WiFi, you can update the firmware over-the-air using PlatformIO:
 
-**Browser:**
-1. Build the firmware: `pio run`
-2. Open `http://winfidel.local/update` in your browser
-3. Select the firmware file: `.pio/build/esp32c3/firmware.bin`
-4. Click "Update" and wait for the upload to complete
-
-**Command line:**
 ```bash
-pio run && curl -F "firmware=@.pio/build/esp32c3/firmware.bin" http://winfidel.local/update
+pio run --target upload --environment esp32_ota
+```
+
+Or using espota.py directly:
+```bash
+pio run && ~/.platformio/packages/framework-arduinoespressif32/tools/espota.py \
+  -i winfidel.local -p 3232 -f .pio/build/esp32c3/firmware.bin
 ```
 
 The device will automatically reboot with the new firmware.

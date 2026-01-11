@@ -4,39 +4,6 @@ Description: This file contains all the functions we use for receiving and respo
 */
 
 #include "version.h"
-#include <Update.h>
-
-// Simple OTA update page
-const char* ota_html = R"rawliteral(
-<!DOCTYPE html>
-<html>
-<head>
-    <title>WInFiDEL Firmware Update</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <style>
-        body { font-family: Arial, sans-serif; margin: 40px; text-align: center; }
-        h1 { color: #333; }
-        form { margin: 20px auto; max-width: 400px; }
-        input[type=file] { margin: 20px 0; }
-        input[type=submit] { background: #007bff; color: white; padding: 10px 30px;
-                             border: none; cursor: pointer; font-size: 16px; }
-        input[type=submit]:hover { background: #0056b3; }
-        #progress { margin-top: 20px; display: none; }
-        .bar { height: 20px; background: #007bff; width: 0%; transition: width 0.3s; }
-        .bar-bg { background: #eee; border-radius: 4px; overflow: hidden; }
-    </style>
-</head>
-<body>
-    <h1>WInFiDEL Firmware Update</h1>
-    <form method="POST" action="/update" enctype="multipart/form-data" id="upload_form">
-        <input type="file" name="firmware" accept=".bin" required><br>
-        <input type="submit" value="Update Firmware">
-    </form>
-    <div id="progress"><div class="bar-bg"><div class="bar" id="bar"></div></div><span id="pct">0%</span></div>
-    <p><a href="/">Back to Home</a></p>
-</body>
-</html>
-)rawliteral";
 
 char sensor_data[SENSOR_STR_MAX_LEN] = {0};
 
@@ -242,43 +209,6 @@ void setupWebServer(void)
         }
     });
 
-    // Web-based OTA update page
-    server.on("/update", HTTP_GET, [](AsyncWebServerRequest *request) {
-        request->send(200, "text/html", ota_html);
-    });
-
-    // Handle firmware upload
-    server.on("/update", HTTP_POST,
-        [](AsyncWebServerRequest *request) {
-            bool success = !Update.hasError();
-            AsyncWebServerResponse *response = request->beginResponse(200, "text/plain",
-                success ? "Update successful! Rebooting..." : "Update failed!");
-            response->addHeader("Connection", "close");
-            request->send(response);
-            if (success) {
-                delay(1000);
-                ESP.restart();
-            }
-        },
-        [](AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final) {
-            if (!index) {
-                Serial.printf("Update Start: %s\n", filename.c_str());
-                if (!Update.begin(UPDATE_SIZE_UNKNOWN)) {
-                    Update.printError(Serial);
-                }
-            }
-            if (Update.write(data, len) != len) {
-                Update.printError(Serial);
-            }
-            if (final) {
-                if (Update.end(true)) {
-                    Serial.printf("Update Success: %u bytes\n", index + len);
-                } else {
-                    Update.printError(Serial);
-                }
-            }
-        }
-    );
 
 }
 

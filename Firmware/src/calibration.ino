@@ -259,7 +259,8 @@ char *get_calibration_json(void)
 // Convert given ADC value to mm using available calibration points
 float adc_to_mm(uint32_t adc)
 {
-    for (uint8_t i=0; i<cal.numPoints; i++)
+    // Start from index 1 to ensure we always have a valid i-1 reference
+    for (uint8_t i=1; i<cal.numPoints; i++)
     {
         if(cal.points[i].adc > adc)
         {
@@ -271,7 +272,12 @@ float adc_to_mm(uint32_t adc)
         }
     }
 
-    // We should never reach this section
-    Serial.println("Failed to find calibration point. Returning 0.0mm");
+    // ADC value is at or beyond max calibration point, return last point's mm value
+    if (cal.numPoints > 0)
+    {
+        return cal.points[cal.numPoints-1].mm;
+    }
+
+    Serial.println("No calibration points available. Returning 0.0mm");
     return 0.0f;
 }

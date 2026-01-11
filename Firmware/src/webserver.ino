@@ -200,7 +200,9 @@ void setupWebServer(void)
     server.on("/api/v0/device/reboot", HTTP_GET, [] (AsyncWebServerRequest *request) {
         if ( request->hasParam("confirm") )
         {
-            Serial.println("Device reboot request recevied. Rebooting...");
+            Serial.println("Device reboot request received. Rebooting...");
+            request->send(200, "application/json", "{\"status\":\"ok\", \"message\": \"Rebooting...\"}");
+            delay(500);
             ESP.restart();
         }
         else

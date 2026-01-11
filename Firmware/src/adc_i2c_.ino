@@ -52,11 +52,11 @@ uint32_t adc_sample_data(uint8_t nSamples)
     uint32_t sample = 0;
     rxPos = 0;
 
-    while(rxPos++ < nSamples)
+    for (uint8_t i = 0; i < nSamples; i++)
     {
         // Request two bytes
         Wire.requestFrom(ADC_I2C_ADDRESS, 2);
-        // // Wait for data to become available
+        // Wait for data to become available
         nADCTimeoutTick = millis() + 100;
         while((!Wire.available()) && (millis()<=nADCTimeoutTick));
 
@@ -73,8 +73,9 @@ uint32_t adc_sample_data(uint8_t nSamples)
         sample = ( (rxBuff[0] << 6 | (rxBuff[1]) >> 2));
         #endif
 
-        adc_samples[rxPos] = sample;
+        adc_samples[i] = sample;
         accumulator += sample;
+        rxPos++;
     }
 
     // Divide value with number of samples

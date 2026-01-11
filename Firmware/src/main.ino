@@ -95,7 +95,7 @@ void setup()
     /**
     * Enable OTA update
     */
-    ArduinoOTA.setHostname(mdnsName);  // Use same name as mDNS
+    ArduinoOTA.setHostname(mdnsName);
     ArduinoOTA
     .onStart([]() {
       String type;

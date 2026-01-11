@@ -1,21 +1,10 @@
 float gReadingMax = 0.0;            // Holds maximum reading
 float gReadingMin = 99999.9;        // Holds minimum reading
-float gReadingAvg = 0.0;            // Holds average reading
+float gReadingAvg = 0.0;            // Holds running average
 float gReadingLast = 0.0;           // Holds value of last reading
 uint32_t nLastADC = 0;              // Last sampled ADC value
 uint32_t numMeasurements = 0;       // Counts how many readings we had
 uint32_t nNextMeasurementTick = 0;  // When next measurement should occur
-
-
-uint32_t adc_sample(void)
-{
-    return random(512, 520);
-}
-
-uint32_t adc_sample_RNG(void)
-{
-    return random(470, 780);
-}
 
 float get_last(void)
 {
@@ -55,9 +44,6 @@ void Measurements_Tick(void)
 {
     if (millis() >= nNextMeasurementTick)
     {
-        // Get latest measurement
-        // nLastADC = adc_sample_RNG();
-
         // Take `ADC_SAMPLES_PER_MEASUREMENT_CYCLE` number of ADC samples
         nLastADC = adc_sample_data(ADC_SAMPLES_PER_MEASUREMENT_CYCLE);
 
@@ -79,15 +65,8 @@ void Measurements_Tick(void)
 
         gReadingLast = adc_to_mm(nLastADC);
 
-        // Update average
-        if (numMeasurements > 1)
-        {
-            gReadingAvg = (gReadingAvg + gReadingLast) / 2;
-        }
-        else
-        {
-            gReadingAvg = gReadingLast;
-        }
+        // Update running average: new_avg = (old_avg * n + new_sample) / (n + 1)
+        gReadingAvg = (gReadingAvg * numMeasurements + gReadingLast) / (numMeasurements + 1);
 
         // Update min
         if (gReadingLast < gReadingMin)

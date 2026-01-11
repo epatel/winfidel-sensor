@@ -12,15 +12,38 @@ Installing PlatformIO CLI is pretty straight-forward and also well documented fo
 You will need to follow few steps and get PlatformIO CLI installed, detailed tutorial can be found at https://platformio.org/install/cli
 Make sure to install [PlatformIO Core](https://docs.platformio.org/en/latest//core/installation.html#installation-methods 'https://docs.platformio.org/en/latest//core/installation.html#installation-methods') and allso that it is available trough [shell](https://docs.platformio.org/en/latest//core/installation.html#piocore-install-shell-commands 'PlatformIO Core - Install Shell Commands¶').
 
-### 2. Build firmware
-Open shell/command-prompt and navigate to 'Firmware/platformio' folder.
+### 2. Install Python dependencies
+The build process uses Python scripts to minify web assets. Install the required packages into PlatformIO's virtual environment:
 
-1. Compile and upload the firmware with `pio run --target upload --upload-port <COM-PORT>`. Make sure to replace `<COM-PORT>` with your ESP32's COM port (ie COM1 or /dev/ttyACM0)
-2. Upload the file system (Web page) with `pio run --target uploadfs --upload-port <COM-PORT>`, again replace `<COM-PORT>` with your ESP32's COM port.
-3. Restart/power-cycle your board
+```bash
+~/.platformio/penv/bin/pip install minify_html rjsmin
+```
 
-Every time you make a firmware change, you need to run step #1.
-Every time you make a change to the web page (anything inside `data` folder) you only need to run step #2.
+### 3. Build firmware
+Open shell/command-prompt and navigate to the `Firmware` folder.
+
+Compile and upload the firmware with:
+```bash
+pio run --target upload
+```
+
+The web assets (from `data_pre` folder) are automatically minified and embedded into the firmware during the build process.
+
+### 4. OTA Updates (Web-based)
+Once the device is connected to WiFi, you can update the firmware via web browser or command line:
+
+**Browser:**
+1. Build the firmware: `pio run`
+2. Open `http://winfidel.local/update` in your browser
+3. Select the firmware file: `.pio/build/esp32c3/firmware.bin`
+4. Click "Update" and wait for the upload to complete
+
+**Command line:**
+```bash
+pio run && curl -F "firmware=@.pio/build/esp32c3/firmware.bin" http://winfidel.local/update
+```
+
+The device will automatically reboot with the new firmware.
 
 
 [<- Go back to repository root](../README.md)

@@ -48,5 +48,67 @@ pio run && ~/.platformio/packages/framework-arduinoespressif32/tools/espota.py \
 
 The device will automatically reboot with the new firmware.
 
+## MQTT Support
+
+WInFiDEL supports MQTT for publishing diameter measurements to a broker, enabling integration with home automation systems like Home Assistant, Node-RED, or custom data logging solutions.
+
+### Configuration
+
+Configure MQTT via the web interface at `http://winfidel.local/settings.html`:
+
+- **Enable MQTT**: Toggle MQTT on/off
+- **Broker Host**: Your MQTT broker address (e.g., `mqtt.example.com`)
+- **Broker Port**: Default is `1883`
+- **Username/Password**: Optional authentication credentials
+- **Device ID**: Identifier used in topic names (default: `winfidel`)
+- **Publish Threshold**: Minimum diameter change (in mm) to trigger a publish (default: `0.01`)
+
+### MQTT Topics
+
+| Topic | Description |
+|-------|-------------|
+| `winfidel/{device_id}/diameter` | Current measurement data (JSON, retained) |
+| `winfidel/{device_id}/status` | Online/offline status (LWT, retained) |
+| `winfidel/{device_id}/cmd/reset` | Send any message to reset statistics |
+| `winfidel/{device_id}/cmd/calibrate` | Create calibration point (JSON) |
+
+### Payload Formats
+
+**Diameter measurement** (`winfidel/{device_id}/diameter`):
+```json
+{
+  "diameter": 1.75,
+  "adc": 2048,
+  "min": 1.72,
+  "max": 1.78,
+  "avg": 1.75,
+  "count": 1234
+}
+```
+
+**Calibration command** (`winfidel/{device_id}/cmd/calibrate`):
+```json
+{"mm": 1.75}
+```
+Or with explicit ADC value:
+```json
+{"mm": 1.75, "adc": 2048}
+```
+
+### Testing
+
+Subscribe to all WInFiDEL topics:
+```bash
+mosquitto_sub -h <broker> -t "winfidel/#" -v
+```
+
+### REST API
+
+MQTT settings can also be configured via REST API:
+
+- `GET /api/v0/mqtt/config` - Read current settings
+- `POST /api/v0/mqtt/config` - Update settings
+- `GET /api/v0/mqtt/status` - Get connection status
+
 
 [<- Go back to repository root](../README.md)

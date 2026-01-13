@@ -55,8 +55,19 @@
 #define LED_GREEN_OFF()                     do { digitalWrite(LED_GREEN_PIN, HIGH); } while(0)
 #define LED_BLUE_ON()                       do { digitalWrite(LED_BLUE_PIN, LOW); } while(0)
 #define LED_BLUE_OFF()                      do { digitalWrite(LED_BLUE_PIN, HIGH); } while(0)
-#define LED_MEASUREMENT_ON()                do { digitalWrite(LED_MEASUREMENT_PIN, LOW); } while(0)
-#define LED_MEASUREMENT_OFF()               do { digitalWrite(LED_MEASUREMENT_PIN, HIGH); } while(0)
+// PWM settings for measurement LED (allows dimming)
+#define LED_MEASUREMENT_PWM_CHANNEL     0
+#define LED_MEASUREMENT_PWM_FREQ        5000
+#define LED_MEASUREMENT_PWM_RESOLUTION  8       // 8-bit = 0-255
+#define LED_MEASUREMENT_BRIGHT          255     // Full brightness (LED is active-low, so 0 = full on)
+#define LED_MEASUREMENT_DIM             245     // Dim (~4% brightness)
+
+// These macros are redefined at runtime after ledcSetup - use functions instead
+void LED_Measurement_On(bool bright);
+void LED_Measurement_Off(void);
+#define LED_MEASUREMENT_ON()            LED_Measurement_On(true)
+#define LED_MEASUREMENT_DIM_ON()        LED_Measurement_On(false)
+#define LED_MEASUREMENT_OFF()           LED_Measurement_Off()
 #define LED_SERIAL_ON()                     do { digitalWrite(LED_SERIAL_PIN, LOW); } while(0)
 #define LED_SERIAL_OFF()                    do { digitalWrite(LED_SERIAL_PIN, HIGH); } while(0)
 

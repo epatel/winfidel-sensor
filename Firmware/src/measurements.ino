@@ -6,6 +6,11 @@ uint32_t nLastADC = 0;              // Last sampled ADC value
 uint32_t numMeasurements = 0;       // Counts how many readings we had
 uint32_t nNextMeasurementTick = 0;  // When next measurement should occur
 
+// LED timing
+static uint32_t ledFlashEndTime = 0;
+#define LED_BRIEF_FLASH_MS          30      // Brief flash on each measurement
+#define LED_CHANGE_FLASH_MS         120     // Longer flash on MQTT publish
+
 float get_last(void)
 {
     return gReadingLast;
@@ -42,6 +47,13 @@ void reset_stats(void)
 
 void Measurements_Tick(void)
 {
+    // Turn off LED after flash duration
+    if (ledFlashEndTime > 0 && millis() >= ledFlashEndTime)
+    {
+        LED_MEASUREMENT_OFF();
+        ledFlashEndTime = 0;
+    }
+
     if (millis() >= nNextMeasurementTick)
     {
         // Take `ADC_SAMPLES_PER_MEASUREMENT_CYCLE` number of ADC samples
@@ -83,21 +95,24 @@ void Measurements_Tick(void)
         // Update reading counter
         numMeasurements++;
 
+        // Publish measurement via MQTT and flash LED accordingly
+        bool mqttPublished = false;
 #if CONFIG_ENABLE_MQTT
-        // Publish measurement via MQTT (only if threshold exceeded)
-        MQTT_Publish_Measurement();
+        mqttPublished = MQTT_Publish_Measurement();
 #endif // CONFIG_ENABLE_MQTT
 
-        // Update the status LED
-        if (bStatusLED)
+        // Update the status LED - dim brief flash normally, bright longer on MQTT publish
+        if (mqttPublished)
         {
-            bStatusLED = false;
-            LED_MEASUREMENT_OFF();
+            // MQTT published - longer bright flash
+            ledFlashEndTime = millis() + LED_CHANGE_FLASH_MS;
+            LED_MEASUREMENT_ON();  // Full brightness
         }
         else
         {
-            bStatusLED = true;
-            LED_MEASUREMENT_ON();
+            // Normal measurement - brief dim flash
+            ledFlashEndTime = millis() + LED_BRIEF_FLASH_MS;
+            LED_MEASUREMENT_DIM_ON();  // Dimmed
         }
 
         // Measurement printing over USB-CDC
@@ -108,7 +123,8 @@ void Measurements_Tick(void)
             Serial.print(gReadingLast);
             Serial.print("mm\r\n");
 
-            if (bStatusLED)
+            // Toggle serial LED on each printout
+            if (numMeasurements & 1)
             {
                 LED_SERIAL_ON();
             }

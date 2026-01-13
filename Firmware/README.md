@@ -110,5 +110,16 @@ MQTT settings can also be configured via REST API:
 - `POST /api/v0/mqtt/config` - Update settings
 - `GET /api/v0/mqtt/status` - Get connection status
 
+## LED Indicators
+
+The green LED provides visual feedback:
+
+| Pattern | Meaning |
+|---------|---------|
+| Dim brief flash | Normal measurement (every 200ms) |
+| Bright longer flash | MQTT message published |
+
+The LED uses PWM for dimming, making it easy to distinguish between routine measurements and actual MQTT activity.
+
 
 [<- Go back to repository root](../README.md)

@@ -7,7 +7,17 @@
 #include "include/PersistSettings.h"
 #include "config_winfidel.h"
 
-bool bStatusLED = false;
+// LED PWM functions for measurement LED dimming
+void LED_Measurement_On(bool bright)
+{
+    // Active-low: 0 = full on, 255 = off
+    ledcWrite(LED_MEASUREMENT_PWM_CHANNEL, bright ? 0 : LED_MEASUREMENT_DIM);
+}
+
+void LED_Measurement_Off(void)
+{
+    ledcWrite(LED_MEASUREMENT_PWM_CHANNEL, 255);  // Active-low: 255 = off
+}
 
 #if CONFIG_ENABLE_WIFI
 WiFiManager wifiManager;
@@ -27,8 +37,10 @@ void setup()
 {
     pinMode(LED_RED_PIN, OUTPUT);
     digitalWrite(LED_RED_PIN, HIGH);
-    pinMode(LED_GREEN_PIN, OUTPUT);
-    digitalWrite(LED_GREEN_PIN, HIGH);
+    // Green LED uses PWM for dimming
+    ledcSetup(LED_MEASUREMENT_PWM_CHANNEL, LED_MEASUREMENT_PWM_FREQ, LED_MEASUREMENT_PWM_RESOLUTION);
+    ledcAttachPin(LED_MEASUREMENT_PIN, LED_MEASUREMENT_PWM_CHANNEL);
+    ledcWrite(LED_MEASUREMENT_PWM_CHANNEL, 255);  // Start off (active-low)
     pinMode(LED_BLUE_PIN, OUTPUT);
     digitalWrite(LED_BLUE_PIN, HIGH);
 
@@ -47,7 +59,7 @@ void setup()
 
     delay(500);
 
-    LED_GREEN_ON();
+    LED_MEASUREMENT_ON();  // Green LED on during setup
 
 #if CONFIG_ENABLE_WIFI
     bool res;
@@ -146,7 +158,7 @@ void setup()
 
     Serial.println("Entering main loop");
     LED_RED_OFF();
-    LED_GREEN_OFF();
+    LED_MEASUREMENT_OFF();
     LED_BLUE_OFF();
 }
 

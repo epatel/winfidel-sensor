@@ -249,11 +249,11 @@ void mqtt_publish_status(bool online)
     mqttClient.publish(mqtt_topic_status, payload, true);  // retained
 }
 
-void MQTT_Publish_Measurement(void)
+bool MQTT_Publish_Measurement(void)
 {
     if (!mqttSettings.Config.enabled || !mqttClient.connected())
     {
-        return;
+        return false;
     }
 
     float currentDiameter = get_last();
@@ -271,7 +271,7 @@ void MQTT_Publish_Measurement(void)
         if (change < 0) change = -change;  // abs
         if (change < threshold)
         {
-            return;  // No significant change
+            return false;  // No significant change
         }
     }
 
@@ -291,7 +291,9 @@ void MQTT_Publish_Measurement(void)
     if (mqttClient.publish(mqtt_topic_diameter, payload, true))
     {
         mqtt_last_published_diameter = currentDiameter;
+        return true;
     }
+    return false;
 }
 
 bool MQTT_IsConnected(void)
@@ -334,7 +336,7 @@ void MQTT_UpdateSettings(void)
 // Stub functions when MQTT is disabled
 void MQTT_Setup(void) {}
 void MQTT_Loop(void) {}
-void MQTT_Publish_Measurement(void) {}
+bool MQTT_Publish_Measurement(void) { return false; }
 bool MQTT_IsConnected(void) { return false; }
 bool MQTT_IsEnabled(void) { return false; }
 void MQTT_UpdateSettings(void) {}

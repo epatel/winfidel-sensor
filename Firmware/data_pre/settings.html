@@ -130,6 +130,65 @@
 
 <div class="container">
   <div class="p-5 text-center bg-body-tertiary">
+    <h1 class="text-body-emphasis">MQTT Settings</h1>
+
+    <div class="col-lg-6 mx-auto mt-4">
+        <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="mqtt-enabled">
+            <label class="form-check-label" for="mqtt-enabled">Enable MQTT</label>
+        </div>
+
+        <div class="input-group mb-3">
+            <span class="input-group-text">Broker Host</span>
+            <input type="text" class="form-control" id="mqtt-broker-host" placeholder="mqtt.example.com">
+        </div>
+
+        <div class="input-group mb-3">
+            <span class="input-group-text">Broker Port</span>
+            <input type="number" class="form-control" id="mqtt-broker-port" value="1883">
+        </div>
+
+        <div class="input-group mb-3">
+            <span class="input-group-text">Username</span>
+            <input type="text" class="form-control" id="mqtt-username" placeholder="(optional)">
+        </div>
+
+        <div class="input-group mb-3">
+            <span class="input-group-text">Password</span>
+            <input type="password" class="form-control" id="mqtt-password" placeholder="(optional)">
+        </div>
+
+        <div class="input-group mb-3">
+            <span class="input-group-text">Device ID</span>
+            <input type="text" class="form-control" id="mqtt-device-id" placeholder="winfidel">
+        </div>
+
+        <div class="input-group mb-3">
+            <span class="input-group-text">Publish Threshold</span>
+            <input type="number" class="form-control" id="mqtt-publish-threshold" value="0.01" step="0.001">
+            <span class="input-group-text">mm</span>
+        </div>
+
+        <div class="mb-3">
+            <span class="badge" id="mqtt-status-badge">Status: Unknown</span>
+        </div>
+
+        <div class="d-flex justify-content-center gap-2">
+            <button type="button" class="btn btn-primary" id="btn-mqtt-save">Save MQTT Settings</button>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <p class="col-lg-8 mx-auto fs-5 text-muted">
+            MQTT topics: <code>winfidel/{device_id}/diameter</code> (measurements), <code>winfidel/{device_id}/status</code> (online/offline)<br>
+            Commands: <code>winfidel/{device_id}/cmd/reset</code>, <code>winfidel/{device_id}/cmd/calibrate</code>
+        </p>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="p-5 text-center bg-body-tertiary">
     <h1 class="text-body-emphasis">Firmware information</h1>
 
         <table class="table table-sm table-striped text-left">
@@ -237,5 +296,6 @@
   <script src="js/jquery-3.6.0.min.js"></script>
   <script src="js/bootstrap.bundle.min.js"></script>
   <script src="js/winfidel_calibration.js"></script>
+  <script src="js/winfidel_mqtt.js"></script>
 </body>
 </html>

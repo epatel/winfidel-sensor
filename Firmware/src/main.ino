@@ -134,6 +134,10 @@ void setup()
     Serial.println("Arduino OTA is on");
 #endif // CONFIG_ENABLE_WIFI
 
+#if CONFIG_ENABLE_MQTT
+    MQTT_Setup();
+#endif // CONFIG_ENABLE_MQTT
+
     // Debug message to signal we are initialized and entering loop
 	Serial.println("Ready to go.");
 
@@ -154,6 +158,10 @@ void loop()
 #if CONFIG_ENABLE_WIFI
     ArduinoOTA.handle();
 #endif // CONFIG_ENABLE_WIFI
+
+#if CONFIG_ENABLE_MQTT
+    MQTT_Loop();
+#endif // CONFIG_ENABLE_MQTT
 
 #ifdef CONFIG_PRINT_MEASUREMENTS_USB_CDC
     int available = Serial.available();

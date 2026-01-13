@@ -4,6 +4,9 @@ Description: This file contains all the functions we use for receiving and respo
 */
 
 #include "version.h"
+#if CONFIG_ENABLE_MQTT
+#include "include/mqtt_settings.h"
+#endif
 
 char sensor_data[SENSOR_STR_MAX_LEN] = {0};
 
@@ -211,6 +214,100 @@ void setupWebServer(void)
         }
     });
 
+#if CONFIG_ENABLE_MQTT
+    // MQTT Configuration - Read
+    server.on("/api/v0/mqtt/config", HTTP_GET, [] (AsyncWebServerRequest *request) {
+        char response[512];
+        snprintf(response, sizeof(response),
+            "{\"status\":\"ok\",\"data\":{\"enabled\":%s,\"broker_host\":\"%s\",\"broker_port\":%d,\"username\":\"%s\",\"publish_threshold\":%.3f,\"device_id\":\"%s\"}}",
+            mqttSettings.Config.enabled ? "true" : "false",
+            mqttSettings.Config.broker_host,
+            mqttSettings.Config.broker_port,
+            mqttSettings.Config.username,
+            mqttSettings.Config.publish_threshold,
+            mqttSettings.Config.device_id
+        );
+        request->send(200, "application/json", response);
+    });
+
+    // MQTT Configuration - Update
+    server.on("/api/v0/mqtt/config", HTTP_POST, [] (AsyncWebServerRequest *request) {
+        bool changed = false;
+
+        if (request->hasParam("enabled", true))
+        {
+            String val = request->getParam("enabled", true)->value();
+            mqttSettings.Config.enabled = (val == "true" || val == "1");
+            changed = true;
+        }
+
+        if (request->hasParam("broker_host", true))
+        {
+            String val = request->getParam("broker_host", true)->value();
+            strncpy(mqttSettings.Config.broker_host, val.c_str(), sizeof(mqttSettings.Config.broker_host) - 1);
+            mqttSettings.Config.broker_host[sizeof(mqttSettings.Config.broker_host) - 1] = '\0';
+            changed = true;
+        }
+
+        if (request->hasParam("broker_port", true))
+        {
+            mqttSettings.Config.broker_port = request->getParam("broker_port", true)->value().toInt();
+            changed = true;
+        }
+
+        if (request->hasParam("username", true))
+        {
+            String val = request->getParam("username", true)->value();
+            strncpy(mqttSettings.Config.username, val.c_str(), sizeof(mqttSettings.Config.username) - 1);
+            mqttSettings.Config.username[sizeof(mqttSettings.Config.username) - 1] = '\0';
+            changed = true;
+        }
+
+        if (request->hasParam("password", true))
+        {
+            String val = request->getParam("password", true)->value();
+            strncpy(mqttSettings.Config.password, val.c_str(), sizeof(mqttSettings.Config.password) - 1);
+            mqttSettings.Config.password[sizeof(mqttSettings.Config.password) - 1] = '\0';
+            changed = true;
+        }
+
+        if (request->hasParam("publish_threshold", true))
+        {
+            mqttSettings.Config.publish_threshold = request->getParam("publish_threshold", true)->value().toFloat();
+            changed = true;
+        }
+
+        if (request->hasParam("device_id", true))
+        {
+            String val = request->getParam("device_id", true)->value();
+            strncpy(mqttSettings.Config.device_id, val.c_str(), sizeof(mqttSettings.Config.device_id) - 1);
+            mqttSettings.Config.device_id[sizeof(mqttSettings.Config.device_id) - 1] = '\0';
+            changed = true;
+        }
+
+        if (changed)
+        {
+            mqttSettings.Write();
+            MQTT_UpdateSettings();
+            request->send(200, "application/json", "{\"status\":\"ok\", \"message\": \"MQTT settings updated. Reconnecting...\"}");
+        }
+        else
+        {
+            request->send(400, "application/json", "{\"status\":\"fail\", \"message\": \"No parameters provided.\"}");
+        }
+    });
+
+    // MQTT Status
+    server.on("/api/v0/mqtt/status", HTTP_GET, [] (AsyncWebServerRequest *request) {
+        char response[256];
+        snprintf(response, sizeof(response),
+            "{\"status\":\"ok\",\"data\":{\"enabled\":%s,\"connected\":%s}}",
+            MQTT_IsEnabled() ? "true" : "false",
+            MQTT_IsConnected() ? "true" : "false"
+        );
+        request->send(200, "application/json", response);
+    });
+#endif // CONFIG_ENABLE_MQTT
 
 }
 

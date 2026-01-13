@@ -83,6 +83,11 @@ void Measurements_Tick(void)
         // Update reading counter
         numMeasurements++;
 
+#if CONFIG_ENABLE_MQTT
+        // Publish measurement via MQTT (only if threshold exceeded)
+        MQTT_Publish_Measurement();
+#endif // CONFIG_ENABLE_MQTT
+
         // Update the status LED
         if (bStatusLED)
         {

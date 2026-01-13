@@ -66,6 +66,17 @@
 
 #define EEPROM_MAGIC_KEY                    0x53    // Predefined value used to verify EEPROM has been initialized
 
+// MQTT Configuration
+#ifndef CONFIG_ENABLE_MQTT
+#define CONFIG_ENABLE_MQTT                  1       // Set to `1` to enable MQTT support
+#endif
+
+#define MQTT_DEFAULT_PORT                   1883    // Default MQTT broker port
+#define MQTT_RECONNECT_INTERVAL_MS          5000    // Reconnect attempt interval
+#define MQTT_CONNECT_TIMEOUT_MS             2000    // Connection timeout
+#define MQTT_PUBLISH_THRESHOLD              0.01f   // Minimum diameter change to trigger publish (mm)
+#define MQTT_TOPIC_PREFIX                   "winfidel"
+#define MQTT_BUFFER_SIZE                    256     // JSON buffer size for MQTT messages
 
 // Enum holding calibration results
 typedef enum winfidel_status
@@ -108,6 +119,10 @@ typedef struct calibration
 
 #if !CONFIG_PRINT_MEASUREMENTS_UART_GPIO
     #pragma message "-- Note: Printing measurements over SERIAL is DISABLED!"
+#endif
+
+#if !CONFIG_ENABLE_MQTT
+    #pragma message "-- Note: MQTT is DISABLED in this build!"
 #endif
 
 

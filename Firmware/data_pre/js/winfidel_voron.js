@@ -126,13 +126,13 @@ function updateVoronStatus() {
                 } else if (response.data.last_error) {
                     badge.addClass('bg-danger').text('Status: Error');
                     if (response.data.last_flow > 0) {
-                        flowDisplay.text('Last flow: ' + response.data.last_flow + '%');
+                        flowDisplay.text('Last flow: ' + response.data.last_flow.toFixed(1) + '%');
                     } else {
                         flowDisplay.text('');
                     }
                 } else if (response.data.last_flow > 0) {
                     badge.addClass('bg-success').text('Status: Active');
-                    flowDisplay.text('Flow: ' + response.data.last_flow + '% (d=' + response.data.last_diameter.toFixed(2) + 'mm)');
+                    flowDisplay.text('Flow: ' + response.data.last_flow.toFixed(1) + '% (d=' + response.data.last_diameter.toFixed(2) + 'mm)');
                 } else {
                     badge.addClass('bg-warning').text('Status: Waiting');
                     flowDisplay.text('');

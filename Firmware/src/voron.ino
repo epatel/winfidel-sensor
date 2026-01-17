@@ -9,7 +9,7 @@ PersistSettings<VoronSettingsConfig> voronSettings(VORON_SETTINGS_VERSION);
 
 // State tracking
 static float voron_last_diameter = -1.0f;
-static int voron_last_flow_int = -1;
+static float voron_last_flow = -1.0f;
 static uint32_t voron_last_update_time = 0;
 static bool voron_last_error = false;
 
@@ -96,15 +96,13 @@ bool Voron_SendFlowRate(float flow)
         return false;
     }
 
-    // Round flow to integer for M221 command
-    int flow_int = (int)(flow + 0.5f);
-
-    // Build URL: POST http://<host>/printer/gcode/script?script=M221%20S<flow_int>
+    // Build URL: POST http://<host>/printer/gcode/script?script=M221%20S<flow>
+    // Klipper's M221 accepts float values (e.g., M221 S97.3)
     char url[192];
-    snprintf(url, sizeof(url), "http://%s:%d/printer/gcode/script?script=M221%%20S%d",
+    snprintf(url, sizeof(url), "http://%s:%d/printer/gcode/script?script=M221%%20S%.1f",
              voronSettings.Config.printer_host,
              voronSettings.Config.printer_port,
-             flow_int);
+             flow);
 
     HTTPClient http;
     http.setTimeout(VORON_HTTP_TIMEOUT_MS);
@@ -117,7 +115,7 @@ bool Voron_SendFlowRate(float flow)
     if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_NO_CONTENT)
     {
         Serial.print("Voron: Flow rate set to ");
-        Serial.print(flow_int);
+        Serial.print(flow, 1);
         Serial.println("%");
         voron_last_error = false;
         return true;
@@ -167,21 +165,27 @@ bool Voron_ProcessMeasurement(float diameter)
 
     // Calculate new flow rate
     float flow = Voron_CalculateFlow(diameter);
-    int flow_int = (int)(flow + 0.5f);
 
-    // Skip if rounded integer is the same as last sent
-    if (flow_int == voron_last_flow_int)
+    // Round to 1 decimal place for comparison (0.1% resolution)
+    float flow_rounded = ((int)(flow * 10.0f + 0.5f)) / 10.0f;
+
+    // Skip if flow (to 1 decimal) is the same as last sent
+    if (voron_last_flow >= 0.0f)
     {
-        // Update diameter tracking but don't send
-        voron_last_diameter = diameter;
-        return false;
+        float last_rounded = ((int)(voron_last_flow * 10.0f + 0.5f)) / 10.0f;
+        if (flow_rounded == last_rounded)
+        {
+            // Update diameter tracking but don't send
+            voron_last_diameter = diameter;
+            return false;
+        }
     }
 
     // Send flow rate update
-    if (Voron_SendFlowRate(flow))
+    if (Voron_SendFlowRate(flow_rounded))
     {
         voron_last_diameter = diameter;
-        voron_last_flow_int = flow_int;
+        voron_last_flow = flow_rounded;
         voron_last_update_time = now;
         return true;
     }
@@ -225,9 +229,9 @@ float Voron_GetLastDiameter(void)
     return voron_last_diameter;
 }
 
-int Voron_GetLastFlowInt(void)
+float Voron_GetLastFlow(void)
 {
-    return voron_last_flow_int;
+    return voron_last_flow;
 }
 
 bool Voron_GetLastError(void)
@@ -245,7 +249,7 @@ void Voron_UpdateSettings(void)
 {
     // Reset state when settings change
     voron_last_diameter = -1.0f;
-    voron_last_flow_int = -1;
+    voron_last_flow = -1.0f;
     voron_last_update_time = 0;
     voron_last_error = false;
 }
@@ -260,7 +264,7 @@ bool Voron_SendFlowRate(float flow) { (void)flow; return false; }
 void Voron_SignalError(void) {}
 bool Voron_TestConnection(void) { return false; }
 float Voron_GetLastDiameter(void) { return -1.0f; }
-int Voron_GetLastFlowInt(void) { return -1; }
+float Voron_GetLastFlow(void) { return -1.0f; }
 bool Voron_GetLastError(void) { return false; }
 bool Voron_IsEnabled(void) { return false; }
 void Voron_UpdateSettings(void) {}

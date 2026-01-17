@@ -408,10 +408,10 @@ void setupWebServer(void)
     server.on("/api/v0/voron/status", HTTP_GET, [] (AsyncWebServerRequest *request) {
         char response[256];
         snprintf(response, sizeof(response),
-            "{\"status\":\"ok\",\"data\":{\"enabled\":%s,\"last_diameter\":%.3f,\"last_flow\":%d,\"last_error\":%s}}",
+            "{\"status\":\"ok\",\"data\":{\"enabled\":%s,\"last_diameter\":%.3f,\"last_flow\":%.1f,\"last_error\":%s}}",
             Voron_IsEnabled() ? "true" : "false",
             Voron_GetLastDiameter(),
-            Voron_GetLastFlowInt(),
+            Voron_GetLastFlow(),
             Voron_GetLastError() ? "true" : "false"
         );
         request->send(200, "application/json", response);

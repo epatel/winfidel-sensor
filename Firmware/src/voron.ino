@@ -9,9 +9,14 @@ PersistSettings<VoronSettingsConfig> voronSettings(VORON_SETTINGS_VERSION);
 
 // State tracking
 static float voron_last_diameter = -1.0f;
+static float voron_diameter_avg = -1.0f;  // Moving average of diameter
 static float voron_last_flow = -1.0f;
 static uint32_t voron_last_update_time = 0;
 static bool voron_last_error = false;
+
+// Moving average smoothing: avg = (sample + avg * N) / (N + 1)
+// N=20 gives ~5% weight to new samples for smooth response
+#define VORON_AVG_SMOOTHING 20
 
 // LED error flash state
 static uint32_t voron_led_error_end_time = 0;
@@ -143,6 +148,18 @@ bool Voron_ProcessMeasurement(float diameter)
         return false;
     }
 
+    // Update moving average (always, even if we don't send an update)
+    if (voron_diameter_avg < 0.0f)
+    {
+        // Initialize average with first sample
+        voron_diameter_avg = diameter;
+    }
+    else
+    {
+        // Exponential moving average: avg = (sample + avg * N) / (N + 1)
+        voron_diameter_avg = (diameter + voron_diameter_avg * VORON_AVG_SMOOTHING) / (VORON_AVG_SMOOTHING + 1);
+    }
+
     uint32_t now = millis();
 
     // Rate limiting - check if enough time has passed
@@ -152,10 +169,10 @@ bool Voron_ProcessMeasurement(float diameter)
         return false;
     }
 
-    // Check threshold - only send if diameter changed significantly
+    // Check threshold - only send if averaged diameter changed significantly
     if (voron_last_diameter >= 0.0f)
     {
-        float change = diameter - voron_last_diameter;
+        float change = voron_diameter_avg - voron_last_diameter;
         if (change < 0) change = -change;  // abs
         if (change < voronSettings.Config.update_threshold)
         {
@@ -163,8 +180,8 @@ bool Voron_ProcessMeasurement(float diameter)
         }
     }
 
-    // Calculate new flow rate
-    float flow = Voron_CalculateFlow(diameter);
+    // Calculate new flow rate using averaged diameter
+    float flow = Voron_CalculateFlow(voron_diameter_avg);
 
     // Round to 1 decimal place for comparison (0.1% resolution)
     float flow_rounded = ((int)(flow * 10.0f + 0.5f)) / 10.0f;
@@ -176,7 +193,7 @@ bool Voron_ProcessMeasurement(float diameter)
         if (flow_rounded == last_rounded)
         {
             // Update diameter tracking but don't send
-            voron_last_diameter = diameter;
+            voron_last_diameter = voron_diameter_avg;
             return false;
         }
     }
@@ -184,7 +201,7 @@ bool Voron_ProcessMeasurement(float diameter)
     // Send flow rate update
     if (Voron_SendFlowRate(flow_rounded))
     {
-        voron_last_diameter = diameter;
+        voron_last_diameter = voron_diameter_avg;
         voron_last_flow = flow_rounded;
         voron_last_update_time = now;
         return true;
@@ -249,6 +266,7 @@ void Voron_UpdateSettings(void)
 {
     // Reset state when settings change
     voron_last_diameter = -1.0f;
+    voron_diameter_avg = -1.0f;
     voron_last_flow = -1.0f;
     voron_last_update_time = 0;
     voron_last_error = false;

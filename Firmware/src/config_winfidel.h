@@ -89,6 +89,13 @@ void LED_Measurement_Off(void);
 #define MQTT_TOPIC_PREFIX                   "winfidel"
 #define MQTT_BUFFER_SIZE                    256     // JSON buffer size for MQTT messages
 
+// Voron Flow Rate Control Configuration
+#ifndef CONFIG_ENABLE_VORON
+#define CONFIG_ENABLE_VORON                 1       // Set to `1` to enable Voron flow rate control
+#endif
+
+#define VORON_HTTP_TIMEOUT_MS               2000    // HTTP timeout for Moonraker API calls
+
 // Enum holding calibration results
 typedef enum winfidel_status
 {
@@ -134,6 +141,10 @@ typedef struct calibration
 
 #if !CONFIG_ENABLE_MQTT
     #pragma message "-- Note: MQTT is DISABLED in this build!"
+#endif
+
+#if !CONFIG_ENABLE_VORON
+    #pragma message "-- Note: Voron flow control is DISABLED in this build!"
 #endif
 
 

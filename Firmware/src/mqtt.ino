@@ -16,6 +16,10 @@ static uint32_t mqtt_last_reconnect_attempt = 0;
 static float mqtt_last_published_diameter = -1.0f;
 static bool mqtt_connected_prev = false;
 
+// LED error flash state
+static uint32_t mqtt_led_error_end_time = 0;
+#define MQTT_LED_ERROR_FLASH_MS 200
+
 // Topic buffers
 static char mqtt_topic_diameter[96];
 static char mqtt_topic_status[96];
@@ -137,12 +141,24 @@ bool mqtt_connect(void)
     {
         Serial.print("failed, rc=");
         Serial.println(mqttClient.state());
+
+        // Flash red LED on connection failure
+        LED_RED_ON();
+        mqtt_led_error_end_time = millis() + MQTT_LED_ERROR_FLASH_MS;
+
         return false;
     }
 }
 
 void MQTT_Loop(void)
 {
+    // Handle LED error flash timing
+    if (mqtt_led_error_end_time > 0 && millis() >= mqtt_led_error_end_time)
+    {
+        LED_RED_OFF();
+        mqtt_led_error_end_time = 0;
+    }
+
     if (!mqttSettings.Config.enabled)
     {
         return;

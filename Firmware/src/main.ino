@@ -6,6 +6,9 @@
 #include "ESPAsyncWebServer.h"
 #include "include/PersistSettings.h"
 #include "config_winfidel.h"
+#if CONFIG_ENABLE_VORON
+#include "include/voron_settings.h"
+#endif
 
 // LED PWM functions for measurement LED dimming
 void LED_Measurement_On(bool bright)
@@ -150,6 +153,10 @@ void setup()
     MQTT_Setup();
 #endif // CONFIG_ENABLE_MQTT
 
+#if CONFIG_ENABLE_VORON
+    Voron_Setup();
+#endif // CONFIG_ENABLE_VORON
+
     // Debug message to signal we are initialized and entering loop
 	Serial.println("Ready to go.");
 
@@ -174,6 +181,10 @@ void loop()
 #if CONFIG_ENABLE_MQTT
     MQTT_Loop();
 #endif // CONFIG_ENABLE_MQTT
+
+#if CONFIG_ENABLE_VORON
+    Voron_Loop();
+#endif // CONFIG_ENABLE_VORON
 
 #ifdef CONFIG_PRINT_MEASUREMENTS_USB_CDC
     int available = Serial.available();

@@ -7,6 +7,9 @@ Description: This file contains all the functions we use for receiving and respo
 #if CONFIG_ENABLE_MQTT
 #include "include/mqtt_settings.h"
 #endif
+#if CONFIG_ENABLE_VORON
+#include "include/voron_settings.h"
+#endif
 
 char sensor_data[SENSOR_STR_MAX_LEN] = {0};
 
@@ -308,6 +311,125 @@ void setupWebServer(void)
         request->send(200, "application/json", response);
     });
 #endif // CONFIG_ENABLE_MQTT
+
+#if CONFIG_ENABLE_VORON
+    // Voron Configuration - Read
+    server.on("/api/v0/voron/config", HTTP_GET, [] (AsyncWebServerRequest *request) {
+        char response[512];
+        snprintf(response, sizeof(response),
+            "{\"status\":\"ok\",\"data\":{\"enabled\":%s,\"printer_host\":\"%s\",\"printer_port\":%d,\"reference_diameter\":%.3f,\"reference_flow\":%.1f,\"update_threshold\":%.3f,\"min_flow\":%.1f,\"max_flow\":%.1f,\"update_interval_ms\":%lu}}",
+            voronSettings.Config.enabled ? "true" : "false",
+            voronSettings.Config.printer_host,
+            voronSettings.Config.printer_port,
+            voronSettings.Config.reference_diameter,
+            voronSettings.Config.reference_flow,
+            voronSettings.Config.update_threshold,
+            voronSettings.Config.min_flow,
+            voronSettings.Config.max_flow,
+            (unsigned long)voronSettings.Config.update_interval_ms
+        );
+        request->send(200, "application/json", response);
+    });
+
+    // Voron Configuration - Update
+    server.on("/api/v0/voron/config", HTTP_POST, [] (AsyncWebServerRequest *request) {
+        bool changed = false;
+
+        if (request->hasParam("enabled", true))
+        {
+            String val = request->getParam("enabled", true)->value();
+            voronSettings.Config.enabled = (val == "true" || val == "1");
+            changed = true;
+        }
+
+        if (request->hasParam("printer_host", true))
+        {
+            String val = request->getParam("printer_host", true)->value();
+            strncpy(voronSettings.Config.printer_host, val.c_str(), sizeof(voronSettings.Config.printer_host) - 1);
+            voronSettings.Config.printer_host[sizeof(voronSettings.Config.printer_host) - 1] = '\0';
+            changed = true;
+        }
+
+        if (request->hasParam("printer_port", true))
+        {
+            voronSettings.Config.printer_port = request->getParam("printer_port", true)->value().toInt();
+            changed = true;
+        }
+
+        if (request->hasParam("reference_diameter", true))
+        {
+            voronSettings.Config.reference_diameter = request->getParam("reference_diameter", true)->value().toFloat();
+            changed = true;
+        }
+
+        if (request->hasParam("reference_flow", true))
+        {
+            voronSettings.Config.reference_flow = request->getParam("reference_flow", true)->value().toFloat();
+            changed = true;
+        }
+
+        if (request->hasParam("update_threshold", true))
+        {
+            voronSettings.Config.update_threshold = request->getParam("update_threshold", true)->value().toFloat();
+            changed = true;
+        }
+
+        if (request->hasParam("min_flow", true))
+        {
+            voronSettings.Config.min_flow = request->getParam("min_flow", true)->value().toFloat();
+            changed = true;
+        }
+
+        if (request->hasParam("max_flow", true))
+        {
+            voronSettings.Config.max_flow = request->getParam("max_flow", true)->value().toFloat();
+            changed = true;
+        }
+
+        if (request->hasParam("update_interval_ms", true))
+        {
+            voronSettings.Config.update_interval_ms = request->getParam("update_interval_ms", true)->value().toInt();
+            changed = true;
+        }
+
+        if (changed)
+        {
+            voronSettings.Write();
+            Voron_UpdateSettings();
+            request->send(200, "application/json", "{\"status\":\"ok\", \"message\": \"Voron settings updated.\"}");
+        }
+        else
+        {
+            request->send(400, "application/json", "{\"status\":\"fail\", \"message\": \"No parameters provided.\"}");
+        }
+    });
+
+    // Voron Status
+    server.on("/api/v0/voron/status", HTTP_GET, [] (AsyncWebServerRequest *request) {
+        char response[256];
+        snprintf(response, sizeof(response),
+            "{\"status\":\"ok\",\"data\":{\"enabled\":%s,\"last_diameter\":%.3f,\"last_flow\":%d,\"last_error\":%s}}",
+            Voron_IsEnabled() ? "true" : "false",
+            Voron_GetLastDiameter(),
+            Voron_GetLastFlowInt(),
+            Voron_GetLastError() ? "true" : "false"
+        );
+        request->send(200, "application/json", response);
+    });
+
+    // Voron Test Connection
+    server.on("/api/v0/voron/test", HTTP_POST, [] (AsyncWebServerRequest *request) {
+        bool success = Voron_TestConnection();
+        if (success)
+        {
+            request->send(200, "application/json", "{\"status\":\"ok\", \"message\": \"Connection successful.\"}");
+        }
+        else
+        {
+            request->send(500, "application/json", "{\"status\":\"fail\", \"message\": \"Connection failed.\"}");
+        }
+    });
+#endif // CONFIG_ENABLE_VORON
 
 }
 

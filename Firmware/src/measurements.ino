@@ -95,16 +95,21 @@ void Measurements_Tick(void)
         // Update reading counter
         numMeasurements++;
 
-        // Publish measurement via MQTT and flash LED accordingly
+        // Publish measurement via MQTT and send Voron flow update
         bool mqttPublished = false;
+        bool voronUpdated = false;
 #if CONFIG_ENABLE_MQTT
         mqttPublished = MQTT_Publish_Measurement();
 #endif // CONFIG_ENABLE_MQTT
 
-        // Update the status LED - dim brief flash normally, bright longer on MQTT publish
-        if (mqttPublished)
+#if CONFIG_ENABLE_VORON
+        voronUpdated = Voron_ProcessMeasurement(gReadingLast);
+#endif // CONFIG_ENABLE_VORON
+
+        // Update the status LED - dim brief flash normally, bright longer on MQTT/Voron update
+        if (mqttPublished || voronUpdated)
         {
-            // MQTT published - longer bright flash
+            // MQTT published or Voron updated - longer bright flash
             ledFlashEndTime = millis() + LED_CHANGE_FLASH_MS;
             LED_MEASUREMENT_ON();  // Full brightness
         }

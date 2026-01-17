@@ -18,6 +18,14 @@ WInFiDEL is an DIY open-source open-hardware Wireless 3D printing filament diame
 
 This design is heavily inspired by the design previously published by Made with Layers (Thomas Sanladerer) (video: https://www.youtube.com/watch?v=RYgdLPe_T0c)
 
+## Features
+
+- **Real-time diameter measurement** via web interface
+- **MQTT integration** for home automation (Home Assistant, Node-RED)
+- **Voron flow rate control** - Automatic M221 flow adjustment via Moonraker API
+- **Over-the-air updates** via ArduinoOTA
+- **REST API** for custom integrations
+
 
 ## Can I build my own WInFiDEL sensor?
 

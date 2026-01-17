@@ -121,5 +121,58 @@ The green LED provides visual feedback:
 
 The LED uses PWM for dimming, making it easy to distinguish between routine measurements and actual MQTT activity.
 
+## Voron Flow Rate Control
+
+WInFiDEL can automatically adjust your Voron printer's flow rate (M221) based on real-time filament diameter measurements. This compensates for filament diameter variations to maintain consistent extrusion.
+
+### How It Works
+
+The flow rate is adjusted using the formula:
+
+```
+flow_new = flow_ref × (d_ref / d_meas)²
+```
+
+The compensation uses the **square** of the diameter ratio because extrusion volume scales with cross-sectional area (πd²/4). See [docs/FLOW_RATE_MATH.md](docs/FLOW_RATE_MATH.md) for detailed mathematics.
+
+### Configuration
+
+Configure via the web interface at `http://winfidel.local/settings.html`:
+
+| Setting | Description | Default |
+|---------|-------------|---------|
+| **Enable** | Toggle Voron control on/off | Off |
+| **Printer Host** | Moonraker address (e.g., `voron.local`) | - |
+| **Printer Port** | Moonraker API port | `80` |
+| **Reference Diameter** | Expected filament diameter | `1.75` mm |
+| **Reference Flow** | Your baseline flow rate | `100`% |
+| **Update Threshold** | Minimum diameter change to trigger update | `0.01` mm |
+| **Min/Max Flow** | Safety limits for flow adjustment | `85-115`% |
+| **Update Interval** | Minimum time between updates | `1000` ms |
+
+### REST API
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v0/voron/config` | GET | Read current settings |
+| `/api/v0/voron/config` | POST | Update settings |
+| `/api/v0/voron/status` | GET | Get connection status and current flow rate |
+
+### Example: Setting Up for Voron
+
+1. Enable Voron control in Settings
+2. Enter your printer's Moonraker host (e.g., `voron.local` or IP address)
+3. Set your baseline flow rate (if you normally print at 97%, enter `97`)
+4. Click "Test Connection" to verify connectivity
+5. Save settings
+
+The sensor will now automatically send M221 commands to maintain correct extrusion as filament diameter varies.
+
+### Troubleshooting
+
+- **Connection failed**: Verify Moonraker is accessible and CORS is enabled
+- **No flow updates**: Check that diameter is being measured and exceeds the update threshold
+- **Flow stuck at min/max**: Your filament may have quality issues if it consistently hits limits
+
 
 [<- Go back to repository root](../README.md)

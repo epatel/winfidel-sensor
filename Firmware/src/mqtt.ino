@@ -8,8 +8,8 @@
 WiFiClient mqttWifiClient;
 PubSubClient mqttClient(mqttWifiClient);
 
-// Persistent settings instance
-PersistSettings<MqttSettingsConfig> mqttSettings(MQTT_SETTINGS_VERSION);
+// Persistent settings instance (unique namespace to avoid collision with other settings)
+PersistSettings<MqttSettingsConfig> mqttSettings(MQTT_SETTINGS_VERSION, "MqttSettings");
 
 // State tracking
 static uint32_t mqtt_last_reconnect_attempt = 0;

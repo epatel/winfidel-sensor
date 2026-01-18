@@ -34,6 +34,7 @@ function loadVoronSettings() {
                 $('#voron-min-flow').val(response.data.min_flow);
                 $('#voron-max-flow').val(response.data.max_flow);
                 $('#voron-update-interval').val(response.data.update_interval_ms);
+                $('#voron-distance-to-extruder').val(response.data.distance_to_extruder_mm || 0);
             }
             updateVoronStatus();
         },
@@ -58,7 +59,8 @@ function saveVoronSettings() {
         update_threshold: $('#voron-update-threshold').val(),
         min_flow: $('#voron-min-flow').val(),
         max_flow: $('#voron-max-flow').val(),
-        update_interval_ms: $('#voron-update-interval').val()
+        update_interval_ms: $('#voron-update-interval').val(),
+        distance_to_extruder_mm: $('#voron-distance-to-extruder').val()
     };
 
     $('#btn-voron-save').prop('disabled', true).text('Saving...');
@@ -118,11 +120,21 @@ function updateVoronStatus() {
             if (response.status === 'ok' && response.data) {
                 var badge = $('#voron-status-badge');
                 var flowDisplay = $('#voron-flow-display');
+                var bufferDisplay = $('#voron-buffer-display');
                 badge.removeClass('bg-success bg-danger bg-warning bg-secondary');
 
                 if (!response.data.enabled) {
                     badge.addClass('bg-secondary').text('Status: Disabled');
                     flowDisplay.text('');
+                    bufferDisplay.text('');
+                } else if (response.data.polling_failed) {
+                    badge.addClass('bg-warning').text('Status: Fallback');
+                    if (response.data.last_flow > 0) {
+                        flowDisplay.text('Flow: ' + response.data.last_flow.toFixed(1) + '% (real-time)');
+                    } else {
+                        flowDisplay.text('');
+                    }
+                    bufferDisplay.text('Polling failed');
                 } else if (response.data.last_error) {
                     badge.addClass('bg-danger').text('Status: Error');
                     if (response.data.last_flow > 0) {
@@ -130,12 +142,31 @@ function updateVoronStatus() {
                     } else {
                         flowDisplay.text('');
                     }
+                    bufferDisplay.text('');
                 } else if (response.data.last_flow > 0) {
                     badge.addClass('bg-success').text('Status: Active');
                     flowDisplay.text('Flow: ' + response.data.last_flow.toFixed(1) + '% (d=' + response.data.last_diameter.toFixed(2) + 'mm)');
+                    // Show buffer status if delay buffer is active
+                    if (response.data.buffer_count > 0) {
+                        var bufferText = 'Buffer: ' + response.data.buffer_count + '/40';
+                        if (!response.data.buffer_primed) {
+                            bufferText += ' (priming)';
+                        }
+                        if (response.data.cumulative_filament > 0) {
+                            bufferText += ' | ' + (response.data.cumulative_filament / 1000).toFixed(1) + 'm used';
+                        }
+                        bufferDisplay.text(bufferText);
+                    } else {
+                        bufferDisplay.text('');
+                    }
                 } else {
                     badge.addClass('bg-warning').text('Status: Waiting');
                     flowDisplay.text('');
+                    if (response.data.buffer_count > 0 && !response.data.buffer_primed) {
+                        bufferDisplay.text('Buffer: ' + response.data.buffer_count + '/40 (priming)');
+                    } else {
+                        bufferDisplay.text('');
+                    }
                 }
             }
         },

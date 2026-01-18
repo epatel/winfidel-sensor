@@ -12,10 +12,11 @@ class PersistSettings{
     private:
         bool mValid;
         unsigned int mConfigVersion;
+        char mNamespace[16];
         uint16_t CRC16(byte *data, size_t data_len);
     public:
         T Config;
-        PersistSettings(unsigned int ConfigVersion);
+        PersistSettings(unsigned int ConfigVersion, const char* ns = "PersistSettings");
         void Begin(void);
         void Write(void);
         void ResetToDefault(void);
@@ -25,12 +26,15 @@ class PersistSettings{
 
 // PersistSettings Constructor
 // Use the Config structure as the class template for the object.
-// Provide a default version, preferable as a static member of the 
+// Provide a default version, preferable as a static member of the
 // config object.
+// ns: unique namespace for this settings type (max 15 chars)
 template <class T>
-PersistSettings<T>::PersistSettings(unsigned int version){
+PersistSettings<T>::PersistSettings(unsigned int version, const char* ns){
     mConfigVersion = version;
-    mValid= false;
+    mValid = false;
+    strncpy(mNamespace, ns, sizeof(mNamespace) - 1);
+    mNamespace[sizeof(mNamespace) - 1] = '\0';
 }
 
 // Initialize the settings object, read the config from the
@@ -42,8 +46,8 @@ void PersistSettings<T>::Begin(void){
     Preferences pref;
 
     // Setup the preferences namespace, as read only
-    if( !pref.begin("PersistSettings", true) ){
-        log_e("Failed to open PersistSettings namespace, resetting and writing defaults.\r\n");
+    if( !pref.begin(mNamespace, true) ){
+        log_e("Failed to open %s namespace, resetting and writing defaults.\r\n", mNamespace);
         this->ResetToDefault();
         return;
     }
@@ -106,8 +110,8 @@ template <class T>
 void PersistSettings<T>::Write(void){
     Preferences pref;
 
-    // Setup the preferences namespace, as read only
-    pref.begin("PersistSettings", false);
+    // Setup the preferences namespace, as read-write
+    pref.begin(mNamespace, false);
 
     // Save the version
     pref.putUInt("version", mConfigVersion);

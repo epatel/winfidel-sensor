@@ -10,7 +10,7 @@
 template <class T> class PersistSettings;
 
 // Voron Settings version - increment when struct changes
-#define VORON_SETTINGS_VERSION 1
+#define VORON_SETTINGS_VERSION 2
 
 // Voron Settings structure
 struct VoronSettingsConfig {
@@ -23,6 +23,7 @@ struct VoronSettingsConfig {
     float min_flow;
     float max_flow;
     uint32_t update_interval_ms;
+    float distance_to_extruder_mm;  // Distance from sensor to extruder for delay buffer (0 = disabled)
 
     // Default constructor with sensible defaults
     VoronSettingsConfig() :
@@ -33,7 +34,8 @@ struct VoronSettingsConfig {
         update_threshold(0.01f),
         min_flow(85.0f),
         max_flow(115.0f),
-        update_interval_ms(1000)
+        update_interval_ms(1000),
+        distance_to_extruder_mm(0.0f)  // 0 = delay buffer disabled, use real-time mode
     {
         memset(printer_host, 0, sizeof(printer_host));
     }

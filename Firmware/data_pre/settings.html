@@ -243,9 +243,16 @@
             <span class="input-group-text">ms</span>
         </div>
 
+        <div class="input-group mb-3">
+            <span class="input-group-text">Distance to Extruder</span>
+            <input type="number" class="form-control" id="voron-distance-to-extruder" value="0" step="10">
+            <span class="input-group-text">mm</span>
+        </div>
+
         <div class="mb-3">
             <span class="badge" id="voron-status-badge">Status: Unknown</span>
             <span class="ms-2" id="voron-flow-display"></span>
+            <span class="ms-2" id="voron-buffer-display"></span>
         </div>
 
         <div class="d-flex justify-content-center gap-2">
@@ -259,6 +266,11 @@
             Automatically adjusts printer flow rate based on measured filament diameter.<br>
             Formula: <code>new_flow = base_flow x (reference_diameter / measured_diameter)^2</code><br>
             Sends M221 commands to Moonraker API at <code>http://host/printer/gcode/script</code>
+        </p>
+        <p class="col-lg-8 mx-auto fs-5 text-muted">
+            <strong>Delay Buffer:</strong> Set "Distance to Extruder" to enable delay compensation.<br>
+            This accounts for the filament length between the sensor and extruder.<br>
+            Set to 0 for real-time mode (no delay). Typical values: 500-2000mm.
         </p>
     </div>
   </div>

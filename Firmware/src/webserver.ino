@@ -315,9 +315,9 @@ void setupWebServer(void)
 #if CONFIG_ENABLE_VORON
     // Voron Configuration - Read
     server.on("/api/v0/voron/config", HTTP_GET, [] (AsyncWebServerRequest *request) {
-        char response[512];
+        char response[640];
         snprintf(response, sizeof(response),
-            "{\"status\":\"ok\",\"data\":{\"enabled\":%s,\"printer_host\":\"%s\",\"printer_port\":%d,\"reference_diameter\":%.3f,\"reference_flow\":%.1f,\"update_threshold\":%.3f,\"min_flow\":%.1f,\"max_flow\":%.1f,\"update_interval_ms\":%lu}}",
+            "{\"status\":\"ok\",\"data\":{\"enabled\":%s,\"printer_host\":\"%s\",\"printer_port\":%d,\"reference_diameter\":%.3f,\"reference_flow\":%.1f,\"update_threshold\":%.3f,\"min_flow\":%.1f,\"max_flow\":%.1f,\"update_interval_ms\":%lu,\"distance_to_extruder_mm\":%.1f}}",
             voronSettings.Config.enabled ? "true" : "false",
             voronSettings.Config.printer_host,
             voronSettings.Config.printer_port,
@@ -326,7 +326,8 @@ void setupWebServer(void)
             voronSettings.Config.update_threshold,
             voronSettings.Config.min_flow,
             voronSettings.Config.max_flow,
-            (unsigned long)voronSettings.Config.update_interval_ms
+            (unsigned long)voronSettings.Config.update_interval_ms,
+            voronSettings.Config.distance_to_extruder_mm
         );
         request->send(200, "application/json", response);
     });
@@ -392,6 +393,12 @@ void setupWebServer(void)
             changed = true;
         }
 
+        if (request->hasParam("distance_to_extruder_mm", true))
+        {
+            voronSettings.Config.distance_to_extruder_mm = request->getParam("distance_to_extruder_mm", true)->value().toFloat();
+            changed = true;
+        }
+
         if (changed)
         {
             voronSettings.Write();
@@ -406,13 +413,17 @@ void setupWebServer(void)
 
     // Voron Status
     server.on("/api/v0/voron/status", HTTP_GET, [] (AsyncWebServerRequest *request) {
-        char response[256];
+        char response[384];
         snprintf(response, sizeof(response),
-            "{\"status\":\"ok\",\"data\":{\"enabled\":%s,\"last_diameter\":%.3f,\"last_flow\":%.1f,\"last_error\":%s}}",
+            "{\"status\":\"ok\",\"data\":{\"enabled\":%s,\"last_diameter\":%.3f,\"last_flow\":%.1f,\"last_error\":%s,\"buffer_primed\":%s,\"buffer_count\":%d,\"cumulative_filament\":%.1f,\"polling_failed\":%s}}",
             Voron_IsEnabled() ? "true" : "false",
             Voron_GetLastDiameter(),
             Voron_GetLastFlow(),
-            Voron_GetLastError() ? "true" : "false"
+            Voron_GetLastError() ? "true" : "false",
+            Voron_GetBufferPrimed() ? "true" : "false",
+            Voron_GetBufferCount(),
+            Voron_GetCumulativeFilament(),
+            Voron_GetPollingFailed() ? "true" : "false"
         );
         request->send(200, "application/json", response);
     });

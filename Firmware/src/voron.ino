@@ -189,6 +189,7 @@ void Voron_Setup(void)
         Serial.print("Voron: Delay buffer distance=");
         Serial.print(voronSettings.Config.distance_to_extruder_mm);
         Serial.println("mm");
+        Serial.println("Voron: Using real-time mode until buffer is primed");
     }
     else
     {
@@ -405,9 +406,10 @@ bool Voron_ProcessMeasurement(float diameter)
         voron_diameter_avg = (diameter + voron_diameter_avg * VORON_AVG_SMOOTHING) / (VORON_AVG_SMOOTHING + 1);
     }
 
-    // If delay buffer is active and polling is working, don't process here
+    // If delay buffer is active, primed, and polling is working, don't process here
     // Flow updates are handled in Voron_Loop() based on filament consumption
-    if (voronSettings.Config.distance_to_extruder_mm > 0 && !voron_polling_failed)
+    // During priming, use real-time mode so the printer has flow compensation immediately
+    if (voronSettings.Config.distance_to_extruder_mm > 0 && !voron_polling_failed && voron_buffer_primed)
     {
         return false;
     }

@@ -135,6 +135,8 @@ flow_new = flow_ref × (d_ref / d_meas)²
 
 The compensation uses the **square** of the diameter ratio because extrusion volume scales with cross-sectional area (πd²/4). See [docs/FLOW_RATE_MATH.md](docs/FLOW_RATE_MATH.md) for detailed mathematics.
 
+![flow_math.jpg](flow_math.jpg)
+
 ### Configuration
 
 Configure via the web interface at `http://winfidel.local/settings.html`:
